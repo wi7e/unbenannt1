@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html ng-app="angularTodoApp">
+<head>
+    <!-- META -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Optimize mobile viewport -->
+
+    <title>Node/Angular Todo App</title>
+
+    <!-- SCROLLS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <!-- load bootstrap -->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="dd.css">
+
+    <style>
+
+
+    </style>
+    <!-- SPELLS -->
+    <!--<script src="../node_modules/angular/angular.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+    <script src="https://rawgithub.com/angular-ui/ui-sortable/master/src/sortable.js"></script>
+    <!-- load jquery -->
+    <!--<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.1/angular.js"></script>
+    <!-- load angular -->
+
+
+    <!--<script src="core.js"></script>-->
+
+
+</head>
+<body ng-controller="mainController">
+
+
+<div class="input-group text-center" ng-if="loggedIn == false">
+
+    <div class="header"><input type="text" class="form-control"
+                               ng-model="loginUserName" name="username"></div>
+    <button type="submit" value="Submit" class="btn btn-primary" ng-click="logMeIn(loginUserName)">
+        login
+    </button>
+</div>
+
+
+<div ng-if="loggedIn == true">
+
+    <div class="header"><h2>Hallo {{username}} !</h2></div>
+
+
+    <div id="todo-form" class="row">
+        <div class="col-sm-8 col-sm-offset-2 text-center">
+            <form>
+                <div class="form-group">
+
+                    <!-- BIND THIS VALUE TO formData.text IN ANGULAR -->
+                    <input type="text" class="form-control input-lg text-center"
+                           placeholder="Neue Todo oder Liste hinzufügen" ng-model="formData.text">
+
+
+                </div>
+
+                <div class="btn-group" uib-dropdown is-open="status.isopen">
+                    <button type="button" class="btn btn-primary" uib-dropdown-toggle>
+                        Add <span class="caret"></span>
+                    </button>
+
+                    <ul class="uib-dropdown-menu" role="menu" aria-labelledby="single-button">
+                        <div ng-repeat="(listName, list) in models.lists">
+                            <label>
+
+                                <li role="menuitem"><a href="#"
+                                                       ng-click="createTodo(listName,username)">{{listName}}</a></li>
+                            </label>
+                        </div>
+                        <li>
+                        <li role="menuitem"><a href="#" class="divider"></a></li>
+                        <li role="menuitem"><a href="#" ng-click="createList()">Als neue Liste hinzufügen</a></li>
+                    </ul>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Single button with keyboard nav -->
+    <div class="btn-group" uib-dropdown uib-keyboard-nav>
+        <button id="simple-btn-keyboard-nav" type="button" class="btn btn-primary" uib-dropdown-toggle>
+            Öffentliche Listen abbonieren<span class="caret"></span>
+        </button>
+        <ul class="uib-dropdown-menu" role="menu" aria-labelledby="simple-btn-keyboard-nav">
+
+            <div ng-repeat="PublicListName in publicLists">
+                <label>
+
+                    <li role="menuitem"><a href="#"
+                                           ng-click="abboList(PublicListName)">{{PublicListName}}</a></li>
+                </label>
+            </div>
+            <li>
+
+
+        </ul>
+        </ul>
+    </div>
+
+
+    <!-- Loop over user Lists -->
+    <div id="list-frame" align="center" ng-repeat="list in lists">
+        <div id="todo-today" class="row">
+            <div class="panel panel-success">
+                <h3> {{list.listname}}</h3>
+                <!-- LOOP OVER THE TODOS IN $scope.todos -->
+                <div class="checkbox" ng-repeat="todo in list.values">
+                    <label>
+                        <input type="checkbox" ng-click="finish(todo)"> {{todo}}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- dynamic dragable lists -->
+    <div class="simpleDemo row ng-scope">
+        <div class="col-md-10">
+            <div class="row">
+                <div ng-repeat="(listName, list) in models.lists" class="col-md-4">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{{listName}}
+                                <span class="icons  glyphicon glyphicon-remove-sign" aria-hidden="false"
+                                      ng-if="listName!=currentDay &&listName!='Work Backlog' &&listName!= 'Private Backlog'"></span>
+                                <span ng-click="changePublicMode(listName)" class="icons  glyphicon glyphicon-eye-open"
+                                      aria-hidden="false"
+                                      ng-if="listName!=currentDay &&listName!='Work Backlog' &&listName!= 'Private Backlog'"></span>
+                                </span></h3>
+
+
+                        </div>
+                        <div class="panel-body">
+                            <ul dnd-list="list"
+                                dnd-drop="dropCallback(event, index, item, external, type, listName,username)"
+                                    >
+                                <!-- The dnd-draggable directive makes an element draggable and will
+                                     transfer the object that was assigned to it. If an element was
+                                     dragged away, you have to remove it from the original list
+                                     yourself using the dnd-moved attribute -->
+
+                                <li ng-repeat="item in list"
+                                    ng-if="item.isDoneList == false"
+                                    dnd-draggable="item"
+                                    dnd-moved="list.splice($index, 1)"
+                                    dnd-effect-allowed="move"
+                                    dnd-selected="models.selected = item"
+                                    ng-class="{'selected': models.selected === item}"
+                                    draggable="true"
+                                        >                                            <!-- ToDo: Set Param -->
+                                    <input type="checkbox" ng-model="checkboxModel.value"
+                                           ng-click="changeTodoStatus(username, listName, item.label, checkboxModel.value)">
+                                    {{item.label}}
+                                </li>
+
+                                <li ng-repeat="item in list"
+                                    ng-if="item.isDoneList == true"
+                                    dnd-draggable="item"
+                                    dnd-moved="list.splice($index, 1)"
+                                    dnd-effect-allowed="move"
+                                    dnd-selected="models.selected = item"
+                                    ng-class="{'selected': models.selected === item}"
+                                    draggable="false"
+                                        >                                            <!-- ToDo: Set Param -->
+
+                                    {{item.label}}
+                                </li>
+
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div view-source="simple"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- FORM TO CREATE TODOS -->
+
+
+</div>
+
+
+<script src="angular/angular.js"></script>
+<script src="angular-ui-bootstrap/ui-bootstrap.js"></script>
+<script src="angular/angular-animate.js"></script>
+<script src="module/angular-drag-and-drop-lists.min.js"></script>
+<script src="core.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.js"></script>
+</body>
+</html>
